@@ -478,11 +478,6 @@ const Home: React.FC = () => {
 
               {scanResult && (
                 <IonCard className="result-card">
-                  <IonCardHeader>
-                    <IonCardTitle className="result-title">
-                      Patente Detectada
-                    </IonCardTitle>
-                  </IonCardHeader>
                   <IonCardContent>
                     <div className="plate-display">
                       <IonBadge color="success" className="plate-badge">
