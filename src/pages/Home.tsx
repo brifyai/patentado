@@ -278,6 +278,9 @@ const Home: React.FC = () => {
         
         // La API devuelve los datos dentro de un objeto "data"
         const vehicleData = apiResponse.data || apiResponse;
+        console.log('vehicleData procesado:', vehicleData);
+        console.log('vehicleData.brand:', vehicleData.brand);
+        console.log('vehicleData.model:', vehicleData.model);
         
         // Consultar tasación del vehículo
         await fetchAppraisal(plate, vehicleData, currentResult);
@@ -312,11 +315,18 @@ const Home: React.FC = () => {
         
         const appraisalData = appraisalResponse.data;
         
+        // El endpoint de tasación incluye datos completos del vehículo con marca
+        const completeVehicleData = appraisalData?.vehicle || vehicleData;
+        console.log('Datos completos del vehículo:', completeVehicleData);
+        console.log('Marca desde tasación:', completeVehicleData?.model?.brand?.name);
+        
         // Combinar datos del vehículo con tasación
         setScanResult({
           ...currentResult,
           vehicleData: {
             ...vehicleData,
+            ...completeVehicleData,
+            brand: completeVehicleData?.model?.brand || vehicleData.brand,
             appraisal: {
               precioUsado: appraisalData?.precioUsado,
               precioRetoma: appraisalData?.precioRetoma,
@@ -499,11 +509,11 @@ const Home: React.FC = () => {
                         <IonText>
                           <h3>Información del Vehículo</h3>
                           
-                          {scanResult.vehicleData.brand?.name && (
+                          {scanResult.vehicleData.brand && scanResult.vehicleData.brand.name && (
                             <p><strong>Marca:</strong> {scanResult.vehicleData.brand.name}</p>
                           )}
                           
-                          {scanResult.vehicleData.model?.name && (
+                          {scanResult.vehicleData.model && scanResult.vehicleData.model.name && (
                             <p><strong>Modelo:</strong> {scanResult.vehicleData.model.name}</p>
                           )}
                           
