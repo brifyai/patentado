@@ -149,7 +149,7 @@ const Home: React.FC = () => {
                 content: [
                   {
                     type: 'text',
-                    text: 'Analiza cuidadosamente esta imagen de una patente vehicular. Extrae ÚNICAMENTE el número de la patente/matrícula visible. La patente puede tener formato chileno (ej: ABCD12, AB1234) u otros formatos latinoamericanos. Responde SOLO con el número de la patente en mayúsculas, sin espacios, sin puntos, sin guiones, sin ningún texto adicional. Si no puedes detectar claramente una patente, responde exactamente "No detectada".',
+                    text: 'Mira esta imagen de una patente vehicular chilena. Lee EXACTAMENTE los caracteres que ves en la placa. Las patentes chilenas tienen formato: 2 letras + 2 letras + punto + 2 números (ej: LYHR62, BBCD34). Lee cada carácter con cuidado, distinguiendo entre letras similares (O vs 0, I vs 1, S vs 5, G vs 6, Z vs 2). Responde SOLO con los caracteres de la patente en mayúsculas, sin espacios, sin puntos, sin guiones. Ejemplo de respuesta correcta: LYHR62',
                   },
                   {
                     type: 'image_url',
@@ -160,8 +160,8 @@ const Home: React.FC = () => {
                 ],
               },
             ],
-            max_tokens: 50,
-            temperature: 0.1, // Reducir temperatura para respuestas más precisas
+            max_tokens: 20,
+            temperature: 0.05,
           }),
         }
       );
@@ -173,7 +173,14 @@ const Home: React.FC = () => {
       }
 
       const data = await response.json();
-      const plateText = data.choices?.[0]?.message?.content?.trim() || 'No detectada';
+      let plateText = data.choices?.[0]?.message?.content?.trim() || 'No detectada';
+      
+      console.log('Texto original de IA:', plateText);
+      
+      // Limpiar y validar el formato de la patente
+      plateText = cleanPlateText(plateText);
+      
+      console.log('Texto limpio:', plateText);
 
       // Crear resultado inicial
       const result: ScanResult = {
@@ -194,6 +201,51 @@ const Home: React.FC = () => {
     } finally {
       setIsScanning(false);
     }
+  };
+
+  const cleanPlateText = (text: string): string => {
+    // Eliminar espacios, puntos, guiones y caracteres especiales
+    let cleaned = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    
+    // Si está vacío, retornar "No detectada"
+    if (!cleaned || cleaned.length < 5) {
+      return 'No detectada';
+    }
+    
+    // Validar formato chileno: 4 letras + 2 números (LYHR62)
+    // o formato antiguo: 2 letras + 4 números (AB1234)
+    const modernFormat = /^[A-Z]{4}\d{2}$/;
+    const oldFormat = /^[A-Z]{2}\d{4}$/;
+    
+    if (modernFormat.test(cleaned) || oldFormat.test(cleaned)) {
+      return cleaned;
+    }
+    
+    // Si tiene más caracteres de lo esperado, intentar extraer el patrón correcto
+    if (cleaned.length > 6) {
+      // Buscar patrón de 4 letras seguidas de 2 números
+      const match = cleaned.match(/[A-Z]{4}\d{2}/);
+      if (match) {
+        return match[0];
+      }
+      
+      // Buscar patrón de 2 letras seguidas de 4 números
+      const oldMatch = cleaned.match(/[A-Z]{2}\d{4}/);
+      if (oldMatch) {
+        return oldMatch[0];
+      }
+      
+      // Si tiene exactamente 6 caracteres al inicio, tomarlos
+      if (cleaned.length >= 6) {
+        const first6 = cleaned.substring(0, 6);
+        if (modernFormat.test(first6) || oldFormat.test(first6)) {
+          return first6;
+        }
+      }
+    }
+    
+    // Si no coincide con ningún formato, retornar lo que se limpió
+    return cleaned.length >= 6 ? cleaned.substring(0, 6) : cleaned;
   };
 
   const fetchVehicleData = async (plate: string, currentResult: ScanResult) => {
