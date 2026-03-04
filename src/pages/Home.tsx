@@ -60,6 +60,8 @@ const Home: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editingPlate, setEditingPlate] = useState(false);
+  const [manualPlate, setManualPlate] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const takePhoto = async () => {
@@ -142,7 +144,7 @@ const Home: React.FC = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'Qwen/Qwen3-VL-235B-A22B-Instruct',
+            model: 'Qwen/Qwen2.5-VL-32B-Instruct',
             messages: [
               {
                 role: 'user',
