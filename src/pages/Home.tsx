@@ -144,7 +144,7 @@ const Home: React.FC = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'google/paligemma-3b-mix-448',
+            model: 'Qwen/Qwen2-VL-72B-Instruct',
             messages: [
               {
                 role: 'user',
