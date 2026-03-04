@@ -142,6 +142,30 @@
   font-size: 13px;
 }
 
+.vehicle-info {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--ion-color-light);
+}
+
+.vehicle-info h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--ion-color-primary);
+}
+
+.vehicle-info p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: var(--ion-text-color);
+}
+
+.vehicle-info strong {
+  color: var(--ion-color-medium);
+  font-weight: 600;
+}
+
 .error-card {
   border-radius: 16px;
   border-left: 4px solid var(--ion-color-danger);

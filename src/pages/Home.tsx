@@ -26,6 +26,17 @@ interface ScanResult {
   plate: string;
   confidence: number;
   timestamp: Date;
+  vehicleData?: VehicleData | null;
+}
+
+interface VehicleData {
+  marca?: string;
+  modelo?: string;
+  año?: number;
+  color?: string;
+  tipo?: string;
+  combustible?: string;
+  [key: string]: any;
 }
 
 const Home: React.FC = () => {
@@ -143,16 +154,50 @@ const Home: React.FC = () => {
       const data = await response.json();
       const plateText = data.choices?.[0]?.message?.content?.trim() || 'No detectada';
 
-      setScanResult({
+      // Crear resultado inicial
+      const result: ScanResult = {
         plate: plateText,
         confidence: 95,
         timestamp: new Date(),
-      });
+      };
+
+      setScanResult(result);
+
+      // Si se detectó una patente válida, consultar datos del vehículo
+      if (plateText !== 'No detectada') {
+        await fetchVehicleData(plateText, result);
+      }
     } catch (err) {
       console.error('Error al analizar con Chutes AI:', err);
       setError('Error al analizar la imagen. Por favor, intenta nuevamente.');
     } finally {
       setIsScanning(false);
+    }
+  };
+
+  const fetchVehicleData = async (plate: string, currentResult: ScanResult) => {
+    try {
+      const response = await fetch(
+        `https://chile.getapi.cl/v1/vehicles/plate/${plate}`,
+        {
+          method: 'GET',
+          headers: {
+            'X-Api-Key': 'd085fb04-057f-44f6-a34d-9f6c7b8d80d2',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const vehicleData = await response.json();
+        setScanResult({
+          ...currentResult,
+          vehicleData: vehicleData,
+        });
+      } else {
+        console.error('Error al consultar datos del vehículo:', response.status);
+      }
+    } catch (err) {
+      console.error('Error al obtener datos del vehículo:', err);
     }
   };
 
@@ -308,6 +353,32 @@ const Home: React.FC = () => {
                         </p>
                       </IonText>
                     </div>
+
+                    {scanResult.vehicleData && (
+                      <div className="vehicle-info">
+                        <IonText>
+                          <h3>Información del Vehículo</h3>
+                          {scanResult.vehicleData.marca && (
+                            <p><strong>Marca:</strong> {scanResult.vehicleData.marca}</p>
+                          )}
+                          {scanResult.vehicleData.modelo && (
+                            <p><strong>Modelo:</strong> {scanResult.vehicleData.modelo}</p>
+                          )}
+                          {scanResult.vehicleData.año && (
+                            <p><strong>Año:</strong> {scanResult.vehicleData.año}</p>
+                          )}
+                          {scanResult.vehicleData.color && (
+                            <p><strong>Color:</strong> {scanResult.vehicleData.color}</p>
+                          )}
+                          {scanResult.vehicleData.tipo && (
+                            <p><strong>Tipo:</strong> {scanResult.vehicleData.tipo}</p>
+                          )}
+                          {scanResult.vehicleData.combustible && (
+                            <p><strong>Combustible:</strong> {scanResult.vehicleData.combustible}</p>
+                          )}
+                        </IonText>
+                      </div>
+                    )}
                   </IonCardContent>
                 </IonCard>
               )}
