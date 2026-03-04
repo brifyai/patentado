@@ -30,12 +30,28 @@ interface ScanResult {
 }
 
 interface VehicleData {
-  marca?: string;
-  modelo?: string;
-  año?: number;
+  licensePlate?: string;
+  year?: number;
   color?: string;
-  tipo?: string;
-  combustible?: string;
+  fuel?: string;
+  vinNumber?: string;
+  engineNumber?: string;
+  engine?: string;
+  transmission?: string;
+  doors?: number;
+  model?: {
+    name?: string;
+    typeVehicle?: {
+      name?: string;
+    };
+  };
+  brand?: {
+    name?: string;
+  };
+  monthRT?: string;
+  rtDate?: string;
+  rtResult?: string;
+  rtResultGas?: string;
   [key: string]: any;
 }
 
@@ -177,6 +193,8 @@ const Home: React.FC = () => {
 
   const fetchVehicleData = async (plate: string, currentResult: ScanResult) => {
     try {
+      console.log('Consultando datos para patente:', plate);
+      
       const response = await fetch(
         `https://chile.getapi.cl/v1/vehicles/plate/${plate}`,
         {
@@ -187,14 +205,22 @@ const Home: React.FC = () => {
         }
       );
 
+      console.log('Respuesta de GetAPI:', response.status);
+
       if (response.ok) {
-        const vehicleData = await response.json();
+        const apiResponse = await response.json();
+        console.log('Datos del vehículo recibidos:', apiResponse);
+        
+        // La API devuelve los datos dentro de un objeto "data"
+        const vehicleData = apiResponse.data || apiResponse;
+        
         setScanResult({
           ...currentResult,
           vehicleData: vehicleData,
         });
       } else {
-        console.error('Error al consultar datos del vehículo:', response.status);
+        const errorText = await response.text();
+        console.error('Error al consultar datos del vehículo:', response.status, errorText);
       }
     } catch (err) {
       console.error('Error al obtener datos del vehículo:', err);
@@ -358,23 +384,45 @@ const Home: React.FC = () => {
                       <div className="vehicle-info">
                         <IonText>
                           <h3>Información del Vehículo</h3>
-                          {scanResult.vehicleData.marca && (
-                            <p><strong>Marca:</strong> {scanResult.vehicleData.marca}</p>
+                          
+                          {scanResult.vehicleData.brand?.name && (
+                            <p><strong>Marca:</strong> {scanResult.vehicleData.brand.name}</p>
                           )}
-                          {scanResult.vehicleData.modelo && (
-                            <p><strong>Modelo:</strong> {scanResult.vehicleData.modelo}</p>
+                          
+                          {scanResult.vehicleData.model?.name && (
+                            <p><strong>Modelo:</strong> {scanResult.vehicleData.model.name}</p>
                           )}
-                          {scanResult.vehicleData.año && (
-                            <p><strong>Año:</strong> {scanResult.vehicleData.año}</p>
+                          
+                          {scanResult.vehicleData.year && (
+                            <p><strong>Año:</strong> {scanResult.vehicleData.year}</p>
                           )}
+                          
+                          {scanResult.vehicleData.model?.typeVehicle?.name && (
+                            <p><strong>Tipo:</strong> {scanResult.vehicleData.model.typeVehicle.name}</p>
+                          )}
+                          
+                          {scanResult.vehicleData.fuel && (
+                            <p><strong>Combustible:</strong> {scanResult.vehicleData.fuel}</p>
+                          )}
+                          
                           {scanResult.vehicleData.color && (
                             <p><strong>Color:</strong> {scanResult.vehicleData.color}</p>
                           )}
-                          {scanResult.vehicleData.tipo && (
-                            <p><strong>Tipo:</strong> {scanResult.vehicleData.tipo}</p>
+                          
+                          {scanResult.vehicleData.vinNumber && (
+                            <p><strong>VIN:</strong> {scanResult.vehicleData.vinNumber}</p>
                           )}
-                          {scanResult.vehicleData.combustible && (
-                            <p><strong>Combustible:</strong> {scanResult.vehicleData.combustible}</p>
+                          
+                          {scanResult.vehicleData.engineNumber && (
+                            <p><strong>N° Motor:</strong> {scanResult.vehicleData.engineNumber}</p>
+                          )}
+                          
+                          {scanResult.vehicleData.transmission && (
+                            <p><strong>Transmisión:</strong> {scanResult.vehicleData.transmission}</p>
+                          )}
+                          
+                          {scanResult.vehicleData.rtDate && (
+                            <p><strong>Revisión Técnica:</strong> {scanResult.vehicleData.monthRT} - {scanResult.vehicleData.rtResult}</p>
                           )}
                         </IonText>
                       </div>
