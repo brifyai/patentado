@@ -52,6 +52,14 @@ interface VehicleData {
   rtDate?: string;
   rtResult?: string;
   rtResultGas?: string;
+  appraisal?: {
+    precioUsado?: {
+      precio?: number;
+      banda_max?: number;
+      banda_min?: number;
+    };
+    precioRetoma?: number;
+  };
   [key: string]: any;
 }
 
@@ -249,6 +257,7 @@ const Home: React.FC = () => {
     try {
       console.log('Consultando datos para patente:', plate);
       
+      // Consultar información básica del vehículo
       const response = await fetch(
         `https://chile.getapi.cl/v1/vehicles/plate/${plate}`,
         {
@@ -268,16 +277,65 @@ const Home: React.FC = () => {
         // La API devuelve los datos dentro de un objeto "data"
         const vehicleData = apiResponse.data || apiResponse;
         
+        // Consultar tasación del vehículo
+        await fetchAppraisal(plate, vehicleData, currentResult);
+      } else {
+        const errorText = await response.text();
+        console.error('Error al consultar datos del vehículo:', response.status, errorText);
+        setScanResult(currentResult);
+      }
+    } catch (err) {
+      console.error('Error al obtener datos del vehículo:', err);
+      setScanResult(currentResult);
+    }
+  };
+
+  const fetchAppraisal = async (plate: string, vehicleData: VehicleData, currentResult: ScanResult) => {
+    try {
+      console.log('Consultando tasación para patente:', plate);
+      
+      const response = await fetch(
+        `https://chile.getapi.cl/v1/vehicles/appraisal/${plate}`,
+        {
+          method: 'GET',
+          headers: {
+            'X-Api-Key': 'd085fb04-057f-44f6-a34d-9f6c7b8d80d2',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const appraisalResponse = await response.json();
+        console.log('Tasación recibida:', appraisalResponse);
+        
+        const appraisalData = appraisalResponse.data;
+        
+        // Combinar datos del vehículo con tasación
+        setScanResult({
+          ...currentResult,
+          vehicleData: {
+            ...vehicleData,
+            appraisal: {
+              precioUsado: appraisalData?.precioUsado,
+              precioRetoma: appraisalData?.precioRetoma,
+            },
+          },
+        });
+      } else {
+        console.error('Error al consultar tasación:', response.status);
+        // Si falla la tasación, mostrar solo los datos del vehículo
         setScanResult({
           ...currentResult,
           vehicleData: vehicleData,
         });
-      } else {
-        const errorText = await response.text();
-        console.error('Error al consultar datos del vehículo:', response.status, errorText);
       }
     } catch (err) {
-      console.error('Error al obtener datos del vehículo:', err);
+      console.error('Error al obtener tasación:', err);
+      // Si falla la tasación, mostrar solo los datos del vehículo
+      setScanResult({
+        ...currentResult,
+        vehicleData: vehicleData,
+      });
     }
   };
 
@@ -477,6 +535,25 @@ const Home: React.FC = () => {
                           
                           {scanResult.vehicleData.rtDate && (
                             <p><strong>Revisión Técnica:</strong> {scanResult.vehicleData.monthRT} - {scanResult.vehicleData.rtResult}</p>
+                          )}
+                          
+                          {scanResult.vehicleData.appraisal && (
+                            <>
+                              <h3 style={{ marginTop: '20px', fontSize: '16px', fontWeight: '700', color: 'var(--ion-color-primary)' }}>Tasación</h3>
+                              
+                              {scanResult.vehicleData.appraisal.precioUsado?.precio && (
+                                <>
+                                  <p><strong>Precio Usado:</strong> ${scanResult.vehicleData.appraisal.precioUsado.precio.toLocaleString('es-CL')}</p>
+                                  <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)' }}>
+                                    Rango: ${scanResult.vehicleData.appraisal.precioUsado.banda_min?.toLocaleString('es-CL')} - ${scanResult.vehicleData.appraisal.precioUsado.banda_max?.toLocaleString('es-CL')}
+                                  </p>
+                                </>
+                              )}
+                              
+                              {scanResult.vehicleData.appraisal.precioRetoma && (
+                                <p><strong>Precio Retoma:</strong> ${scanResult.vehicleData.appraisal.precioRetoma.toLocaleString('es-CL')}</p>
+                              )}
+                            </>
                           )}
                         </IonText>
                       </div>
