@@ -20,7 +20,6 @@ import {
 } from '@ionic/react';
 import { camera, refresh, scan } from 'ionicons/icons';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import Tesseract from 'tesseract.js';
 import './Home.css';
 
 interface ScanResult {
@@ -49,7 +48,13 @@ const Home: React.FC = () => {
         correctOrientation: true,
       });
 
-      setPhoto(photo.dataUrl || null);
+      const dataUrl = photo.dataUrl || null;
+      setPhoto(dataUrl);
+      
+      // Analizar automáticamente después de tomar la foto
+      if (dataUrl) {
+        await analyzePlateWithGemini(dataUrl);
+      }
     } catch (err: unknown) {
       console.error('Error al tomar foto:', err);
       // Si falla la cámara nativa, usar el input file como fallback
@@ -69,15 +74,73 @@ const Home: React.FC = () => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const result = e.target?.result;
         if (typeof result === 'string') {
           setPhoto(result);
           setScanResult(null);
           setError(null);
+          
+          // Analizar automáticamente después de cargar la imagen
+          await analyzePlateWithGemini(result);
         }
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const analyzePlateWithGemini = async (imageDataUrl: string) => {
+    setIsScanning(true);
+    setError(null);
+
+    try {
+      // Extraer la parte base64 de la imagen (sin el prefijo data:image/...)
+      const base64Image = imageDataUrl.split(',')[1];
+      
+      const response = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyBAfwlZCOqOWNcIuGqqxSkwh6Ex78ceuO0',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: 'Analiza esta imagen y extrae ÚNICAMENTE el número de la patente/matrícula del vehículo. Responde solo con el número de la patente en formato limpio, sin espacios ni caracteres especiales adicionales. Si no puedes detectar una patente, responde "No detectada".',
+                  },
+                  {
+                    inline_data: {
+                      mime_type: 'image/jpeg',
+                      data: base64Image,
+                    },
+                  },
+                ],
+              },
+            ],
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Error al analizar la imagen con Gemini');
+      }
+
+      const data = await response.json();
+      const plateText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'No detectada';
+
+      setScanResult({
+        plate: plateText,
+        confidence: 95, // Gemini no proporciona confianza, usamos un valor fijo
+        timestamp: new Date(),
+      });
+    } catch (err) {
+      console.error('Error al analizar con Gemini:', err);
+      setError('Error al analizar la imagen. Por favor, intenta nuevamente.');
+    } finally {
+      setIsScanning(false);
     }
   };
 
@@ -139,30 +202,7 @@ const Home: React.FC = () => {
 
   const scanPlate = async () => {
     if (!photo) return;
-
-    setIsScanning(true);
-    setError(null);
-
-    try {
-      const result = await Tesseract.recognize(photo, 'spa', {
-        logger: (m) => console.log(m),
-      });
-
-      const text = result.data.text;
-      const plate = extractPlateNumber(text);
-      const confidence = result.data.confidence;
-
-      setScanResult({
-        plate,
-        confidence: Math.round(confidence),
-        timestamp: new Date(),
-      });
-    } catch (err) {
-      console.error('Error en OCR:', err);
-      setError('Error al analizar la imagen. Por favor, intenta nuevamente.');
-    } finally {
-      setIsScanning(false);
-    }
+    await analyzePlateWithGemini(photo);
   };
 
   const resetScan = () => {
