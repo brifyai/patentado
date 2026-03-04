@@ -95,7 +95,11 @@ const Home: React.FC = () => {
 
     try {
       // Extraer la parte base64 de la imagen (sin el prefijo data:image/...)
-      const base64Image = imageDataUrl.split(',')[1];
+      const base64Data = imageDataUrl.split(',');
+      const base64Image = base64Data[1];
+      
+      // Detectar el tipo MIME de la imagen
+      const mimeType = base64Data[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
       
       const response = await fetch(
         'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyBAfwlZCOqOWNcIuGqqxSkwh6Ex78ceuO0',
@@ -113,19 +117,25 @@ const Home: React.FC = () => {
                   },
                   {
                     inline_data: {
-                      mime_type: 'image/jpeg',
+                      mime_type: mimeType,
                       data: base64Image,
                     },
                   },
                 ],
               },
             ],
+            generationConfig: {
+              temperature: 0.4,
+              maxOutputTokens: 100,
+            },
           }),
         }
       );
 
       if (!response.ok) {
-        throw new Error('Error al analizar la imagen con Gemini');
+        const errorData = await response.json();
+        console.error('Error de Gemini API:', errorData);
+        throw new Error(`Error ${response.status}: ${errorData.error?.message || 'Error desconocido'}`);
       }
 
       const data = await response.json();
