@@ -102,7 +102,7 @@ const Home: React.FC = () => {
       const mimeType = base64Data[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
       
       const response = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyBAfwlZCOqOWNcIuGqqxSkwh6Ex78ceuO0',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyBAfwlZCOqOWNcIuGqqxSkwh6Ex78ceuO0',
         {
           method: 'POST',
           headers: {
