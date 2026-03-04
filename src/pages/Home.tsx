@@ -49,7 +49,7 @@ const Home: React.FC = () => {
         correctOrientation: true,
       });
 
-      setPhoto(photo.dataUrl);
+      setPhoto(photo.dataUrl || null);
     } catch (err: unknown) {
       console.error('Error al tomar foto:', err);
       // Si falla la cámara nativa, usar el input file como fallback
