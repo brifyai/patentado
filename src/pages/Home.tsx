@@ -102,52 +102,54 @@ const Home: React.FC = () => {
       const mimeType = base64Data[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
       
       const response = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyBAfwlZCOqOWNcIuGqqxSkwh6Ex78ceuO0',
+        'https://llm.chutes.ai/v1/chat/completions',
         {
           method: 'POST',
           headers: {
+            'Authorization': 'Bearer cpk_4b497533565343a2a80d661b562c22ea.b4d96e96ec805198a14e9cc168164353.0JqB2gxg98DD6nFDMMq5xLr1z1tl9SkK',
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            contents: [
+            model: 'Qwen/Qwen3-VL-235B-A22B-Instruct',
+            messages: [
               {
-                parts: [
+                role: 'user',
+                content: [
                   {
+                    type: 'text',
                     text: 'Analiza esta imagen y extrae ÚNICAMENTE el número de la patente/matrícula del vehículo. Responde solo con el número de la patente en formato limpio, sin espacios ni caracteres especiales adicionales. Si no puedes detectar una patente, responde "No detectada".',
                   },
                   {
-                    inline_data: {
-                      mime_type: mimeType,
-                      data: base64Image,
+                    type: 'image_url',
+                    image_url: {
+                      url: imageDataUrl,
                     },
                   },
                 ],
               },
             ],
-            generationConfig: {
-              temperature: 0.4,
-              maxOutputTokens: 100,
-            },
+            max_tokens: 100,
+            temperature: 0.3,
           }),
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Error de Gemini API:', errorData);
+        console.error('Error de Chutes AI:', errorData);
         throw new Error(`Error ${response.status}: ${errorData.error?.message || 'Error desconocido'}`);
       }
 
       const data = await response.json();
-      const plateText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'No detectada';
+      const plateText = data.choices?.[0]?.message?.content?.trim() || 'No detectada';
 
       setScanResult({
         plate: plateText,
-        confidence: 95, // Gemini no proporciona confianza, usamos un valor fijo
+        confidence: 95,
         timestamp: new Date(),
       });
     } catch (err) {
-      console.error('Error al analizar con Gemini:', err);
+      console.error('Error al analizar con Chutes AI:', err);
       setError('Error al analizar la imagen. Por favor, intenta nuevamente.');
     } finally {
       setIsScanning(false);
