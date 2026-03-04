@@ -273,19 +273,17 @@ const Home: React.FC = () => {
       if (response.ok) {
         const apiResponse = await response.json();
         console.log('Datos del vehículo recibidos:', apiResponse);
-        console.log('Marca:', apiResponse.data?.brand?.name);
-        console.log('Tipo:', apiResponse.data?.model?.typeVehicle?.name);
         
         // La API devuelve los datos dentro de un objeto "data"
         const vehicleData = apiResponse.data || apiResponse;
-        console.log('vehicleData procesado:', vehicleData);
-        console.log('vehicleData.brand:', vehicleData.brand);
-        console.log('vehicleData.model:', vehicleData.model);
         
-        // Asegurarse de que brand esté disponible
-        if (!vehicleData.brand && apiResponse.data?.brand) {
-          vehicleData.brand = apiResponse.data.brand;
+        // La marca está dentro de model.brand, no en el nivel superior
+        if (vehicleData.model?.brand && !vehicleData.brand) {
+          vehicleData.brand = vehicleData.model.brand;
         }
+        
+        console.log('Marca extraída:', vehicleData.brand?.name);
+        console.log('Tipo:', vehicleData.model?.typeVehicle?.name);
         
         // Consultar tasación del vehículo
         await fetchAppraisal(plate, vehicleData, currentResult);
