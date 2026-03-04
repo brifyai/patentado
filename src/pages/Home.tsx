@@ -128,52 +128,49 @@ const Home: React.FC = () => {
     setError(null);
 
     try {
-      // Extraer la parte base64 de la imagen (sin el prefijo data:image/...)
-      const base64Data = imageDataUrl.split(',');
-      const base64Image = base64Data[1];
-      
-      // Detectar el tipo MIME de la imagen
-      const mimeType = base64Data[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
-      
       const response = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyBAfwlZCOqOWNcIuGqqxSkwh6Ex78ceuO0',
+        'https://api.groq.com/openai/v1/chat/completions',
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
           },
           body: JSON.stringify({
-            contents: [
+            model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+            messages: [
               {
-                parts: [
+                role: 'user',
+                content: [
                   {
+                    type: 'text',
                     text: 'Mira esta imagen de una patente vehicular chilena. Lee EXACTAMENTE los caracteres que ves en la placa. Las patentes chilenas tienen formato: 4 letras + 2 números (ej: LYHR62, BBCD34). Lee cada carácter con mucho cuidado, distinguiendo entre letras similares (O vs 0, I vs 1, L vs 1, S vs 5, G vs 6, Z vs 2, Y vs V). Responde SOLO con los caracteres de la patente en mayúsculas, sin espacios, sin puntos, sin guiones. Ejemplo de respuesta correcta: LYHR62',
                   },
                   {
-                    inline_data: {
-                      mime_type: mimeType,
-                      data: base64Image,
+                    type: 'image_url',
+                    image_url: {
+                      url: imageDataUrl,
                     },
                   },
                 ],
               },
             ],
-            generationConfig: {
-              temperature: 0.1,
-              maxOutputTokens: 20,
-            },
+            temperature: 0.1,
+            max_completion_tokens: 20,
+            top_p: 1,
+            stream: false,
           }),
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Error de Gemini API:', errorData);
+        console.error('Error de Groq API:', errorData);
         throw new Error(`Error ${response.status}: ${errorData.error?.message || 'Error desconocido'}`);
       }
 
       const data = await response.json();
-      let plateText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'No detectada';
+      let plateText = data.choices?.[0]?.message?.content?.trim() || 'No detectada';
       
       console.log('Texto original de IA:', plateText);
       
@@ -196,7 +193,7 @@ const Home: React.FC = () => {
         await fetchVehicleData(plateText, result);
       }
     } catch (err) {
-      console.error('Error al analizar con Gemini:', err);
+      console.error('Error al analizar con Groq:', err);
       setError('Error al analizar la imagen. Por favor, intenta nuevamente.');
     } finally {
       setIsScanning(false);
