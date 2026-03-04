@@ -68,11 +68,13 @@ const Home: React.FC = () => {
       setScanResult(null);
       
       const photo = await Camera.getPhoto({
-        quality: 90,
+        quality: 100, // Aumentar calidad al máximo
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Camera,
         correctOrientation: true,
+        width: 1920, // Establecer un ancho máximo para mejor calidad
+        height: 1080,
       });
 
       const dataUrl = photo.dataUrl || null;
@@ -80,6 +82,8 @@ const Home: React.FC = () => {
       
       // Analizar automáticamente después de tomar la foto
       if (dataUrl) {
+        // Pequeño delay para asegurar que la imagen esté lista
+        await new Promise(resolve => setTimeout(resolve, 500));
         await analyzePlateWithGemini(dataUrl);
       }
     } catch (err: unknown) {
@@ -109,6 +113,7 @@ const Home: React.FC = () => {
           setError(null);
           
           // Analizar automáticamente después de cargar la imagen
+          await new Promise(resolve => setTimeout(resolve, 500));
           await analyzePlateWithGemini(result);
         }
       };
@@ -144,7 +149,7 @@ const Home: React.FC = () => {
                 content: [
                   {
                     type: 'text',
-                    text: 'Analiza esta imagen y extrae ÚNICAMENTE el número de la patente/matrícula del vehículo. Responde solo con el número de la patente en formato limpio, sin espacios ni caracteres especiales adicionales. Si no puedes detectar una patente, responde "No detectada".',
+                    text: 'Analiza cuidadosamente esta imagen de una patente vehicular. Extrae ÚNICAMENTE el número de la patente/matrícula visible. La patente puede tener formato chileno (ej: ABCD12, AB1234) u otros formatos latinoamericanos. Responde SOLO con el número de la patente en mayúsculas, sin espacios, sin puntos, sin guiones, sin ningún texto adicional. Si no puedes detectar claramente una patente, responde exactamente "No detectada".',
                   },
                   {
                     type: 'image_url',
@@ -155,8 +160,8 @@ const Home: React.FC = () => {
                 ],
               },
             ],
-            max_tokens: 100,
-            temperature: 0.3,
+            max_tokens: 50,
+            temperature: 0.1, // Reducir temperatura para respuestas más precisas
           }),
         }
       );
