@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Patentado</string>
+    <string name="title_activity_main">Patentado</string>
+    <string name="package_name">com.patentado.app</string>
+    <string name="custom_url_scheme">com.patentado.app</string>
+</resources>
