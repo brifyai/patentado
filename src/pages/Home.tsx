@@ -136,46 +136,44 @@ const Home: React.FC = () => {
       const mimeType = base64Data[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
       
       const response = await fetch(
-        'https://llm.chutes.ai/v1/chat/completions',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyBAfwlZCOqOWNcIuGqqxSkwh6Ex78ceuO0',
         {
           method: 'POST',
           headers: {
-            'Authorization': 'Bearer cpk_4b497533565343a2a80d661b562c22ea.b4d96e96ec805198a14e9cc168164353.0JqB2gxg98DD6nFDMMq5xLr1z1tl9SkK',
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'Qwen/Qwen2-VL-72B-Instruct',
-            messages: [
+            contents: [
               {
-                role: 'user',
-                content: [
+                parts: [
                   {
-                    type: 'text',
-                    text: 'Mira esta imagen de una patente vehicular chilena. Lee EXACTAMENTE los caracteres que ves en la placa. Las patentes chilenas tienen formato: 2 letras + 2 letras + punto + 2 números (ej: LYHR62, BBCD34). Lee cada carácter con cuidado, distinguiendo entre letras similares (O vs 0, I vs 1, S vs 5, G vs 6, Z vs 2). Responde SOLO con los caracteres de la patente en mayúsculas, sin espacios, sin puntos, sin guiones. Ejemplo de respuesta correcta: LYHR62',
+                    text: 'Mira esta imagen de una patente vehicular chilena. Lee EXACTAMENTE los caracteres que ves en la placa. Las patentes chilenas tienen formato: 4 letras + 2 números (ej: LYHR62, BBCD34). Lee cada carácter con mucho cuidado, distinguiendo entre letras similares (O vs 0, I vs 1, L vs 1, S vs 5, G vs 6, Z vs 2, Y vs V). Responde SOLO con los caracteres de la patente en mayúsculas, sin espacios, sin puntos, sin guiones. Ejemplo de respuesta correcta: LYHR62',
                   },
                   {
-                    type: 'image_url',
-                    image_url: {
-                      url: imageDataUrl,
+                    inline_data: {
+                      mime_type: mimeType,
+                      data: base64Image,
                     },
                   },
                 ],
               },
             ],
-            max_tokens: 20,
-            temperature: 0.05,
+            generationConfig: {
+              temperature: 0.1,
+              maxOutputTokens: 20,
+            },
           }),
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Error de Chutes AI:', errorData);
+        console.error('Error de Gemini API:', errorData);
         throw new Error(`Error ${response.status}: ${errorData.error?.message || 'Error desconocido'}`);
       }
 
       const data = await response.json();
-      let plateText = data.choices?.[0]?.message?.content?.trim() || 'No detectada';
+      let plateText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'No detectada';
       
       console.log('Texto original de IA:', plateText);
       
@@ -198,7 +196,7 @@ const Home: React.FC = () => {
         await fetchVehicleData(plateText, result);
       }
     } catch (err) {
-      console.error('Error al analizar con Chutes AI:', err);
+      console.error('Error al analizar con Gemini:', err);
       setError('Error al analizar la imagen. Por favor, intenta nuevamente.');
     } finally {
       setIsScanning(false);
