@@ -282,6 +282,11 @@ const Home: React.FC = () => {
         console.log('vehicleData.brand:', vehicleData.brand);
         console.log('vehicleData.model:', vehicleData.model);
         
+        // Asegurarse de que brand esté disponible
+        if (!vehicleData.brand && apiResponse.data?.brand) {
+          vehicleData.brand = apiResponse.data.brand;
+        }
+        
         // Consultar tasación del vehículo
         await fetchAppraisal(plate, vehicleData, currentResult);
       } else {
@@ -315,18 +320,11 @@ const Home: React.FC = () => {
         
         const appraisalData = appraisalResponse.data;
         
-        // El endpoint de tasación incluye datos completos del vehículo con marca
-        const completeVehicleData = appraisalData?.vehicle || vehicleData;
-        console.log('Datos completos del vehículo:', completeVehicleData);
-        console.log('Marca desde tasación:', completeVehicleData?.model?.brand?.name);
-        
         // Combinar datos del vehículo con tasación
         setScanResult({
           ...currentResult,
           vehicleData: {
             ...vehicleData,
-            ...completeVehicleData,
-            brand: completeVehicleData?.model?.brand || vehicleData.brand,
             appraisal: {
               precioUsado: appraisalData?.precioUsado,
               precioRetoma: appraisalData?.precioRetoma,
