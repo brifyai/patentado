@@ -273,6 +273,8 @@ const Home: React.FC = () => {
       if (response.ok) {
         const apiResponse = await response.json();
         console.log('Datos del vehículo recibidos:', apiResponse);
+        console.log('Marca:', apiResponse.data?.brand?.name);
+        console.log('Tipo:', apiResponse.data?.model?.typeVehicle?.name);
         
         // La API devuelve los datos dentro de un objeto "data"
         const vehicleData = apiResponse.data || apiResponse;
