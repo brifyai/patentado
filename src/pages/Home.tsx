@@ -70,9 +70,12 @@ const Home: React.FC = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setPhoto(e.target?.result as string | null);
-        setScanResult(null);
-        setError(null);
+        const result = e.target?.result;
+        if (typeof result === 'string') {
+          setPhoto(result);
+          setScanResult(null);
+          setError(null);
+        }
       };
       reader.readAsDataURL(file);
     }
