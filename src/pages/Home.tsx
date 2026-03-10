@@ -49,9 +49,16 @@ interface VehicleData {
     name?: string;
   };
   monthRT?: string;
-  rtDate?: string;
-  rtResult?: string;
-  rtResultGas?: string;
+  rtDate?: string | null;
+  rtResult?: string | null;
+  rtResultGas?: string | null;
+  plantaRevisora?: {
+    codPrt?: string;
+    region?: string;
+    comuna?: string;
+    concesionPlantaRevisora?: string;
+    direccion?: string;
+  };
   appraisal?: {
     precioUsado?: {
       precio?: number;
@@ -284,6 +291,10 @@ const Home: React.FC = () => {
         
         console.log('Marca extraída:', vehicleData.brand?.name);
         console.log('Tipo:', vehicleData.model?.typeVehicle?.name);
+        console.log('RT Date:', vehicleData.rtDate);
+        console.log('RT Month:', vehicleData.monthRT);
+        console.log('RT Result:', vehicleData.rtResult);
+        console.log('RT Result Gas:', vehicleData.rtResultGas);
         
         // Consultar tasación del vehículo
         await fetchAppraisal(plate, vehicleData, currentResult);
@@ -536,8 +547,87 @@ const Home: React.FC = () => {
                             <p><strong>Transmisión:</strong> {scanResult.vehicleData.transmission}</p>
                           )}
                           
-                          {scanResult.vehicleData.rtDate && (
-                            <p><strong>Revisión Técnica:</strong> {scanResult.vehicleData.monthRT} - {scanResult.vehicleData.rtResult}</p>
+                          <h3 style={{ marginTop: '20px', fontSize: '16px', fontWeight: '700', color: 'var(--ion-color-primary)' }}>Revisión Técnica</h3>
+                          
+                          {scanResult.vehicleData.rtDate || scanResult.vehicleData.rtResult || scanResult.vehicleData.rtResultGas ? (
+                            <>
+                              {scanResult.vehicleData.monthRT && (
+                                <p><strong>Mes:</strong> {scanResult.vehicleData.monthRT}</p>
+                              )}
+                              
+                              {scanResult.vehicleData.rtDate && scanResult.vehicleData.rtDate !== '0000-00-00 00:00:00' && (
+                                <p><strong>Fecha Vencimiento:</strong> {new Date(scanResult.vehicleData.rtDate).toLocaleDateString('es-CL')}</p>
+                              )}
+                              
+                              {scanResult.vehicleData.rtResult && (
+                                <p>
+                                  <strong>Resultado:</strong>{' '}
+                                  <span style={{ 
+                                    color: scanResult.vehicleData.rtResult === 'A' ? 'green' : 
+                                           scanResult.vehicleData.rtResult === 'R' ? 'red' : 'orange',
+                                    fontWeight: '600'
+                                  }}>
+                                    {scanResult.vehicleData.rtResult === 'A' ? 'Aprobado' : 
+                                     scanResult.vehicleData.rtResult === 'R' ? 'Rechazado' : 
+                                     scanResult.vehicleData.rtResult}
+                                  </span>
+                                </p>
+                              )}
+                              
+                              {scanResult.vehicleData.rtResultGas && (
+                                <p>
+                                  <strong>Resultado Gases:</strong>{' '}
+                                  <span style={{ 
+                                    color: scanResult.vehicleData.rtResultGas === 'A' ? 'green' : 
+                                           scanResult.vehicleData.rtResultGas === 'R' ? 'red' : 'orange',
+                                    fontWeight: '600'
+                                  }}>
+                                    {scanResult.vehicleData.rtResultGas === 'A' ? 'Aprobado' : 
+                                     scanResult.vehicleData.rtResultGas === 'R' ? 'Rechazado' : 
+                                     scanResult.vehicleData.rtResultGas}
+                                  </span>
+                                </p>
+                              )}
+                              
+                              {scanResult.vehicleData.plantaRevisora && (
+                                <>
+                                  {scanResult.vehicleData.plantaRevisora.concesionPlantaRevisora && (
+                                    <p><strong>Planta Revisora:</strong> {scanResult.vehicleData.plantaRevisora.concesionPlantaRevisora}</p>
+                                  )}
+                                  {scanResult.vehicleData.plantaRevisora.comuna && scanResult.vehicleData.plantaRevisora.region && (
+                                    <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)' }}>
+                                      {scanResult.vehicleData.plantaRevisora.comuna}, {scanResult.vehicleData.plantaRevisora.region}
+                                    </p>
+                                  )}
+                                </>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {scanResult.vehicleData.year && (new Date().getFullYear() - scanResult.vehicleData.year <= 3) ? (
+                                <p style={{ color: 'var(--ion-color-success)', fontWeight: '600' }}>
+                                  Homologado (Vehículo nuevo sin revisión técnica requerida)
+                                </p>
+                              ) : scanResult.vehicleData.monthRT ? (
+                                <>
+                                  <p><strong>Mes:</strong> {scanResult.vehicleData.monthRT}</p>
+                                  {scanResult.vehicleData.plantaRevisora?.concesionPlantaRevisora && (
+                                    <>
+                                      <p><strong>Planta Revisora:</strong> {scanResult.vehicleData.plantaRevisora.concesionPlantaRevisora}</p>
+                                      {scanResult.vehicleData.plantaRevisora.comuna && scanResult.vehicleData.plantaRevisora.region && (
+                                        <p style={{ fontSize: '13px', color: 'var(--ion-color-medium)' }}>
+                                          {scanResult.vehicleData.plantaRevisora.comuna}, {scanResult.vehicleData.plantaRevisora.region}
+                                        </p>
+                                      )}
+                                    </>
+                                  )}
+                                </>
+                              ) : (
+                                <p style={{ color: 'var(--ion-color-medium)', fontStyle: 'italic' }}>
+                                  Sin información de revisión técnica disponible
+                                </p>
+                              )}
+                            </>
                           )}
                           
                           {scanResult.vehicleData.appraisal && (
