@@ -547,6 +547,10 @@ const Home: React.FC = () => {
                             <p><strong>Transmisión:</strong> {scanResult.vehicleData.transmission}</p>
                           )}
                           
+                          {scanResult.vehicleData.doors && (
+                            <p><strong>Puertas:</strong> {scanResult.vehicleData.doors}</p>
+                          )}
+                          
                           <h3 style={{ marginTop: '20px', fontSize: '16px', fontWeight: '700', color: 'var(--ion-color-primary)' }}>Revisión Técnica</h3>
                           
                           {scanResult.vehicleData.rtDate || scanResult.vehicleData.rtResult || scanResult.vehicleData.rtResultGas ? (
